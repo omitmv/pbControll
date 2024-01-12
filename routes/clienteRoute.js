@@ -2,33 +2,28 @@ const express = require('express')
 
 const router = express.Router()
 
-const ClienteModel = require('../model/ClienteModel')
-
 router.put('/', function(req, res, next) {
     try {
         const conn = require('../config/db')
-        if (!req.body.cdCliente) {
-            throw new Error('DADOS INCONSISTENTES')
+        var params = {
+            tpCliente: req.body.tpCliente,
+            cpfcnpj: req.body.cpfcnpj,
+            rg: req.body.rg,
+            ie: req.body.ie,
+            flStatus: req.body.flStatus,
+            nomeRsocial: req.body.nomeRsocial
         }
         conn.query(
-                `UPDATE tbCliente
-            SET
-            tpCliente = ${req.body.tpCliente},
-            cpfcnpj = "${req.body.cpfcnpj}",
-            rg = "${req.body.rg}",
-            ie = "${req.body.ie}",
-            flStatus = "${req.body.flStatus}",
-            nomeRsocial = "${req.body.nomeRsocial}"
-            WHERE cdCliente = ${req.body.cdCliente}`
-            ),
+            `UPDATE tbCliente SET ? WHERE cdCliente = ${req.body.cdCliente}`,
+            params,
             function(err, data) {
                 if (err) {
                     res.status(401).json({ error: err })
                 } else {
                     res.status(200).json({ data })
                 }
-                conn.destroy()
             }
+        )
     } catch (e) {
         res.status(401).json({ error: e })
     }
@@ -45,7 +40,6 @@ router.get('/', function(req, res, next) {
                 } else {
                     res.status(200).json({ data: rows })
                 }
-                conn.destroy()
             }
         )
     } catch (e) {
@@ -54,36 +48,20 @@ router.get('/', function(req, res, next) {
 })
 
 router.post('/', function(req, res, next) {
-    const client = new ClienteModel(
-        0,
-        req.body.tpCliente,
-        req.body.cpfcnpj,
-        req.body.rg,
-        req.body.ie,
-        req.body.flStatus,
-        req.body.dtCadastro,
-        req.body.nomeRsocial
-    )
     try {
         const conn = require('../config/db')
+        var params = [
+            req.body.tpCliente,
+            req.body.cpfcnpj,
+            req.body.rg,
+            req.body.ie,
+            req.body.flStatus,
+            req.body.nomeRsocial
+        ]
         conn.query(
-            `INSERT INTO tbCliente(
-                tpCliente,
-                cpfcnpj,
-                rg,
-                ie,
-                flStatus,
-                dtCadastro,
-                nomeRsocial
-            )VALUES(
-                ${client.getTpCliente()},
-                "${client.getCpfcnpj()}",
-                "${client.getRg()}",
-                "${client.getIe()}",
-                "${client.getFlStatus()}",
-                "${client.getDtCadastro()}",
-                "${client.getNomeRsocial()}"
-            )`,
+            `INSERT INTO tbCliente( tpCliente, cpfcnpj, rg, ie, flStatus, nomeRsocial, dtCadastro
+            )VALUES( ?, ?, ?, ?, ?, ?, SYSDATE() )`,
+            params,
             function(err, rows) {
                 if (err) {
                     res.status(401).json({ error: err })

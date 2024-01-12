@@ -2,6 +2,30 @@ const express = require('express')
 
 const router = express.Router()
 
+router.put('/', function(req, res, next) {
+    try {
+        const conn = require('../config/db')
+        var params = {
+            login: req.body.login,
+            senha: req.body.senha,
+            flAtivo: req.body.flAtivo
+        }
+        conn.query(
+            `UPDATE tbUsuario SET ? WHERE cdUsuario = ${req.body.cdUsuario}`,
+            params,
+            function(err, data) {
+                if (err) {
+                    res.status(401).json({ error: err })
+                } else {
+                    res.status(200).json({ data })
+                }
+            }
+        )
+    } catch (e) {
+        res.status(401).json({ error: e })
+    }
+})
+
 router.get('/', function(req, res, next) {
     try {
         const conn = require('../config/db')
@@ -13,7 +37,6 @@ router.get('/', function(req, res, next) {
                 } else {
                     res.status(200).json({ data: rows })
                 }
-                conn.destroy()
             }
         )
     } catch (e) {
@@ -24,16 +47,17 @@ router.get('/', function(req, res, next) {
 router.post('/', function(req, res, next) {
     try {
         const conn = require('../config/db')
+        var params = [req.body.login, req.body.senha]
         conn.query(
             `INSERT INTO tbUsuario(login, senha)
-            VALUES("${req.body.login}", "${req.body.senha}")`,
+            VALUES( ?, ? )`,
+            params,
             function(err, data) {
                 if (err) {
                     res.status(401).json({ error: err })
                 } else {
                     res.status(200).json({ data })
                 }
-                conn.destroy()
             }
         )
     } catch (e) {
@@ -54,7 +78,6 @@ router.delete('/', function(req, res, next) {
                 } else {
                     res.status(200).json({ data: reuslt })
                 }
-                conn.destroy()
             }
         )
     } catch (e) {
